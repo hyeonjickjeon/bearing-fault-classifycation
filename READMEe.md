@@ -21,7 +21,7 @@ for i = 1:72;
 end
 ```
 - make_sample_은  3초의 신호를 샘플 생성을 위해 분해 후 각 raw data 들을 statical feature / enevelope  feature/ wavelet feature 모두 생성시켜서 66개를 생성시킨다 
-- - (입력 데이터 , 3초 데이터를 몇개로 쪼갤 것인지,72행 중 1개 선택  )
+- - make sample 입력값(입력 데이터 , 3초 데이터를 몇개로 쪼갤 것인지,72행 중 1개 선택  )
 
 ```Matlab
 
@@ -66,7 +66,7 @@ end
 ```
 -  분해된 신호가 입력이 되면 개별 feature extraction 함수로 입력된 후 반환 받은 값들을 col 에 통합시킴
 -  col 66번째 열은 class number 이다. class 는 1,2,3 으로 지정하였음 (1 : normal, 2: bearing fault, 3 : shaft misalignment )
--  다음은 순차적으로 통계적 추출기법, Wavelet Packet, Envelope 함수이다.  
+-  다음은 순차적으로 통계적 추출기법, Wavelet Packet, Envelope 함수이다. (참고)
 
 
 
