@@ -1,6 +1,30 @@
-# 매틀랩 코드 
+# 준비 자료 및 데이터 
+## 필요 사항 
+
+- Matlab 
+- github file 
+- open dataset(git 파일 첨부되어있음/아래 링크 참조)
+
+## Youtube Explanation about Research 
+
+https://studio.youtube.com/video/wTNGG8p30rI/edit
+
+### 논문 : 
+[1] Rauber, Thomas W.; de Assis Boldt, Francisco; Varejao, Flavio Miguel (2015). Heterogeneous Feature Models and Feature Selection Applied to Bearing Fault Diagnosis. IEEE Transactions on Industrial Electronics, 62(1), 637–646.
+
+[2] Chen, Han-Yun; Lee, Ching-Hung (2020). Vibration Signals Analysis by Explainable Artificial Intelligence (XAI) Approach: Application on Bearing Faults Diagnosis. IEEE Access, (), 1–1.
+
+### 공유 데이터 셋 : https://aihub.or.kr/aidata/30748
+
+# 매틀랩 코드 설명
+
+### 각 section 별 기능 설명을 제공함(세세한 변수 설명은 일부 생략) 
+### 하위 설명은 main 문 중심이며 중간에 func 설명과 함께 진행됨
 
 
+## 매틀랩 코드[1]
+
+### AI_main 문 
 ```Matlab
 
 [nf bf af] =read_file();
@@ -20,8 +44,9 @@ for i = 1:72;
         result = vertcat(result,col);
 end
 ```
-- make_sample_은  3초의 신호를 샘플 생성을 위해 분해 후 각 raw data 들을 statical feature / enevelope  feature/ wavelet feature 모두 생성시켜서 66개를 생성시킨다 
-- - (입력 데이터 , 3초 데이터를 몇개로 쪼갤 것인지,72행 중 1개 선택  )
+- i는 정상, 베어링 결함, 축 결함 각각 24개씩 총 72개임 
+- make_sample_은  3초의 신호를 샘플 생성을 위해 분해 후 각 raw data 들을 statical feature / enevelope  feature/ wavelet feature 모두 생성시켜서 66개를 생성시 
+- (입력 데이터 , 3초 데이터를 몇개로 쪼갤 것인지,72행 중 1개 선택  )
 
 ```Matlab
 
@@ -151,16 +176,172 @@ end
 
 
 
+```matlab
+PD = 0.80;
+N =cnt;
+idx = randperm(N);
+train_index = idx(1:round(N*PD));
+test_index  = idx(round(N*PD)+1:end);
+
+X_Ptrain = data_set_x(:,:,1,train_index);
+X_Ptest = data_set_x(:,:,1,test_index);
+
+Y_Ptrain = data_set_y(train_index);
+Y_Ptrain= categorical(Y_Ptrain).';
+
+Y_Ptest = data_set_y(test_index);
+Y_Ptest= categorical(Y_Ptest).';
+```
+- randperm 을 통해 random index 생성 
+- random 하게 훈련 셋과 테스트 셋을 생성 
+- 분류 모델 훈련을 위해 y (labeling) 값은 categorical 시행해야함
+
+```matlab
+fun = @(XT,yT,Xt,yt)loss(fitcknn(XT,yT, 'NumNeighbors', 10, 'Standardize', 1),Xt,yt, 'Lossfun', 'binodeviance');
+c = cvpartition(Y_Ptrain,'k',10);
+opts = statset('Display','iter');
+[fs,history] = sequentialfs(fun,x_train,Y_Ptrain.','cv',c,'options',opts)
+```
+- Feature selecotion 수행 (based on knn) 
 
 
+```matlab
+Mdl = fitcknn(x_train,Y_Ptrain,'NumNeighbors',5,'Standardize',1);
+cvMdl = crossval(Mdl); % Performs stratified 10-fold cross-validation
+cvtrainError = kfoldLoss(cvMdl) ;
+1-cvtrainError
+
+[label,Score] = resubPredict(Mdl);
+[X,Y,T,AUC] = perfcurve(Y_Ptrain,Score(:,num),num);
+AUC
+```
+- knn 훈련 
+- cross validation 통해 성능 비교 
+- Accuracy : 1- cvtrainError
+- AUC : AUC ROC score 
+
+```matlab
+Mdl = fitcecoc(x_train,Y_Ptrain);
+cvMdl = crossval(Mdl); % Performs stratified 10-fold cross-validation
+cvtrainError = kfoldLoss(cvMdl) ;
+1-cvtrainError
+
+[label,Score] = resubPredict(Mdl);
+[X,Y,T,AUC] = perfcurve(Y_Ptrain,Score(:,num),num);
+AUC
+```
+- SVM 훈련 (과정 knn 과 동일)
+
+## 매틀랩 코드[2]
+### AIHUBB_cnn 문 
+### 훈련 및 테스트 셋 분류 [1] 설명 참고  
+
+```matlab
+
+clear; clc; close all;
+
+[nf bf af] =read_file();
+data = horzcat(nf, bf, af);
+cnn_set = data;
+```
+- Data 불러오기 [1]동일 방식 
 
 
+```matlab
+window = 8000;
+stride = 1000;
+fs = 4000;
+cnt = 0 ;
+```
+- CNN 을 위한 window size, sliding legth, sampling frequency 초기 선언 
 
 
+```matlab
+for l = 1:72
+    x = cnn_set(:,l);
+    num = length(x)/stride;
+    for i= 1 : num-7
+        cnt = cnt +1;
+
+        data = x(1+ stride*(i-1) : window + stride*(i-1) );
+        [s,f,t]= stft(data,fs,'Window',kaiser(256,5),'OverlapLength',220,'FFTLength',512,'FrequencyRange',"onesided");
+        I = abs(s);
+        J = filter2(fspecial('sobel'),I);
+        I = mat2gray(J);
+        image = flip(I);
+        data_set_x(:,:,1,cnt) = normalize(image); % 4차원 변수 257x 327 x 개수 x cnt(총 데이터 개수 )  
+        data_set_y(cnt) = ceil(l/24) ;% 올림을 통해 Index 1,2,3,4 대입함 
+    end
+end
+```
+
+- 입력 데이터 window 만들기 & Sliding 하기 
+- STFT 시행하여 CNN 이미지 만들기
+- Grey scale 로 변환 
+- Data normalization
+- ceil(l/24) 를 통해 24개씩 Labeling 시행 (1,2,3)
 
 
+```matlab
+
+layers = [
+    imageInputLayer([257 216 1])
+    convolution2dLayer(9,9,'NumFilters',9,'Stride',2)
+    reluLayer
+    dropoutLayer(0.2)
+    convolution2dLayer(9,9,'NumFilters',9,'Stride',2)
+    reluLayer
+    dropoutLayer(0.2)
+
+    averagePooling2dLayer(4)
+    
+    convolution2dLayer(16,16,'NumFilters',28,'Stride',2)
+    reluLayer
+    globalAveragePooling2dLayer
+    fullyConnectedLayer(3)
+    reluLayer
+    softmaxLayer
+    classificationLayer
+
+    ];
+
+miniBatchSize  = 50;
+validationFrequency = floor(numel(data_set_y)/miniBatchSize);
+options = trainingOptions('sgdm', ...
+    'MiniBatchSize',miniBatchSize, ...
+    'MaxEpochs',30, ...
+    'ValidationData',{X_Ptest,Y_Ptest}, ...
+    'Plots','training-progress', ...
+    'Verbose',false);
+
+net = trainNetwork(X_Ptrain,categorical(Y_Ptrain).',layers,options);
+```
+- CNN layer 층 생성 및 hyperparameter 선언 
+- 생성 및 변수 값 생성 근거는 [2] 참고함
 
 
+```matlab
 
+        label = classify(net,X);
+        [scoreMap,featureLayer,reductionLayer] = gradCAM(net,X,label);
 
+        figure(3)
+        x_axis = linspace(0,1,257);
+        y_axis = linspace(0,6,327);
+        colorbar;
+        imwrite(scoreMap,'tempg.png');
+        A = imread('tempg.png');
 
+        imagesc(x_axis,y_axis,flip(A));
+
+        set(gca,'YDir','normal')
+        title('Grad Cam','FontSize',22)
+        ax.FontSize = 50
+        xlabel('Time[sec]','FontSize',26) ;
+        ylabel('Frequency[Khz]','FontSize',26) ;
+ ```
+ 
+ - Gradcam 결과 보기 
+ - classify 함수를 통해 CNN 모델의 예측 결과 값 도출
+ - gradCAM 함수에 (모델, 입력변수, 예측 결과) 입력을 통해 scoremap 도출 
+ - scoremap 이미지 저장 후 다시 불러와서 사용자에게 표시 
