@@ -33,7 +33,7 @@ data = horzcat(nf, bf, af);
 
 - read_file: AI_hub data set 업로드 
 - nf,bf,af : normal data, Bearing fault data, misalignment data Upload
-- data     : 각 데이터 수평 통합  
+- data     : 각 데이터 수평 통합(총 72개임)
 
 
 ```Matlab
@@ -45,8 +45,8 @@ for i = 1:72;
 end
 ```
 - i는 정상, 베어링 결함, 축 결함 각각 24개씩 총 72개임 
-- make_sample_은  3초의 신호를 샘플 생성을 위해 분해 후 각 raw data 들을 statical feature / enevelope  feature/ wavelet feature 모두 생성시켜서 66개를 생성시 
-- (입력 데이터 , 3초 데이터를 몇개로 쪼갤 것인지,72행 중 1개 선택  )
+- make_sample_은 신호를 sliciing 하기 위해 분해한 이후 내부 함수를 통해 각 data 들을 statical feature / enevelope  feature/ wavelet feature 모두 생성시켜서 66개를 생성시킴(뒤에 설명있음)
+- make_sample_ 입력 내용 : (입력 데이터 ,몇개로 쪼갤 것인지,72행 중 1행 선택)
 
 ```Matlab
 
@@ -66,8 +66,8 @@ col = [];
 end
 ```
 
-- 3초 데이터 5개 샘플로 신호 분해 
-- make_column_cnn을 활용하여 statical feature / enevelope  feature/ wavelet feature
+- 신호를 sliciing 하기 위해 분해
+- make_column_cnn은 Raw signal에서 statical feature / enevelope  feature/ wavelet feature 를 생성하는 함수임 
 
 ```Matlab
 function col = make_column_cnn(x1,Class_Number,n) % (DE,FE,Class_Number)
@@ -89,11 +89,9 @@ a =[1,2,3];
     end
 end 
 ```
--  분해된 신호가 입력이 되면 개별 feature extraction 함수로 입력된 후 반환 받은 값들을 col 에 통합시킴
+-  개별 feature extraction 함수에서 각각의 특징 신호를 반환받은 이후 horzat 를 사용하여 col matrix에 통합시킴(Statical : 13개,Wavelet : 16개, Envelope : 36개 ) 
 -  col 66번째 열은 class number 이다. class 는 1,2,3 으로 지정하였음 (1 : normal, 2: bearing fault, 3 : shaft misalignment )
 -  다음은 순차적으로 통계적 추출기법, Wavelet Packet, Envelope 함수이다.  
-
-
 
 ```Matlab
 function col = make_statical_cnn(x1)
@@ -202,7 +200,7 @@ c = cvpartition(Y_Ptrain,'k',10);
 opts = statset('Display','iter');
 [fs,history] = sequentialfs(fun,x_train,Y_Ptrain.','cv',c,'options',opts)
 ```
-- Feature selecotion 수행 (based on knn) 
+- Feature selecotion 수행 (based on KNN) 
 
 
 ```matlab
@@ -215,8 +213,9 @@ cvtrainError = kfoldLoss(cvMdl) ;
 [X,Y,T,AUC] = perfcurve(Y_Ptrain,Score(:,num),num);
 AUC
 ```
-- knn 훈련 
-- cross validation 통해 성능 비교 
+
+- KNN 훈련 
+- Cross Validation 통해 성능 비교 
 - Accuracy : 1- cvtrainError
 - AUC : AUC ROC score 
 
