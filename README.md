@@ -7,8 +7,7 @@
 
 ## Youtube Explanation about Research 
 
-https://studio.youtube.com/video/wTNGG8p30rI/edit
-
+https://www.youtube.com/watch?v=NrCo4uULAdo&ab_channel=%EC%A0%84%ED%98%84%EC%A7%81%ED%95%99%EB%B6%80%EC%83%9D
 ## 논문 : 
 [1] Rauber, Thomas W.; de Assis Boldt, Francisco; Varejao, Flavio Miguel (2015). Heterogeneous Feature Models and Feature Selection Applied to Bearing Fault Diagnosis. IEEE Transactions on Industrial Electronics, 62(1), 637–646.
 
