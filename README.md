@@ -2,19 +2,19 @@
 ## 필요 사항 
 
 - Matlab 
-- github file 
+- matlab library file(m file)
 - open dataset(git 파일 첨부되어있음/아래 링크 참조)
 
 ## Youtube Explanation about Research 
 
 https://studio.youtube.com/video/wTNGG8p30rI/edit
 
-### 논문 : 
+## 논문 : 
 [1] Rauber, Thomas W.; de Assis Boldt, Francisco; Varejao, Flavio Miguel (2015). Heterogeneous Feature Models and Feature Selection Applied to Bearing Fault Diagnosis. IEEE Transactions on Industrial Electronics, 62(1), 637–646.
 
 [2] Chen, Han-Yun; Lee, Ching-Hung (2020). Vibration Signals Analysis by Explainable Artificial Intelligence (XAI) Approach: Application on Bearing Faults Diagnosis. IEEE Access, (), 1–1.
 
-### 공유 데이터 셋 : https://aihub.or.kr/aidata/30748
+## 공유 데이터 셋 : https://aihub.or.kr/aidata/30748
 
 # 매틀랩 코드 설명
 
